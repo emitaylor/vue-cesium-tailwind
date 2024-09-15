@@ -1,0 +1,4 @@
+[
+  { "id": 1, "name": "Drone A", "status": "active" },
+  { "id": 2, "name": "Drone B", "status": "inactive" }
+]
