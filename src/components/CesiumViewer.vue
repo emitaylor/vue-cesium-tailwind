@@ -21,7 +21,7 @@ export default {
           throw new Error("Conteneur Cesium not found");
         }
 
-        var viewer = new Cesium.Viewer("cesiumContainer", {
+        const viewer = new Cesium.Viewer("cesiumContainer", {
           infoBox: false,
           animation: false,
           timeline: false,
@@ -31,27 +31,41 @@ export default {
           navigationHelpButton: false,
           sceneModePicker: false,
         });
-        
-        this.viewer = viewer;
 
-        this.viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(3.1324, 43.4479),
-          point: {
-            pixelSize: 10, // Size
-            color: Cesium.Color.RED, // Color RED
-          },
-          description: "Welcome home!."
+        // Centre la caméra sur le château de Murviel-lès-Béziers
+        viewer.camera.flyTo({
+          destination: Cesium.Cartesian3.fromDegrees(3.14354, 43.43992, 300),
+          orientation: {
+            heading: Cesium.Math.toRadians(0.0),
+            pitch: Cesium.Math.toRadians(-90.0), // Vue directement vers le bas
+            roll: 0.0
+          }
         });
-        console.log("Cesium initialisé", viewer);
 
-        // Load GeoJSON file in Cesium
+        // Charger le fichier GeoJSON et afficher les entités
         const geojsonUrl = 'example.geojson'; 
 
-        this.viewer.dataSources.add(Cesium.GeoJsonDataSource.load(geojsonUrl)).then(() => {
-          console.log("GeoJSON chargé avec succès !");
-        }).catch(error => {
-          console.error("Erreur lors du chargement du GeoJSON:", error);
+        const dataSource = await Cesium.GeoJsonDataSource.load(geojsonUrl);
+        viewer.dataSources.add(dataSource);
+
+        // Parcourir les entités et ajouter des labels si nécessaire
+        dataSource.entities.values.forEach(entity => {
+          entity.label = {
+            text: entity.properties.name,
+            font: '14pt monospace',
+            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
+            outlineWidth: 2,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            pixelOffset: new Cesium.Cartesian2(0, -9),
+          };
+          entity.point = {
+            pixelSize: 10,
+            color: Cesium.Color.RED,
+            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
+          };
         });
+
+        console.log("GeoJSON chargé avec succès !");
       } 
       catch (error) {
         console.error("Error during initialization of Cesium", error);
