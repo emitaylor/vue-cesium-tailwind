@@ -1,0 +1,17 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [-75.59777, 40.03883] 
+        },
+        "properties": {
+          "name": "Point Rouge",
+          "description": "Un simple point rouge sur la carte."
+        }
+      }
+    ]
+  }
+  

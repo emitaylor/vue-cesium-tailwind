@@ -18,7 +18,7 @@ export default {
         const container = document.getElementById("cesiumContainer");
 
         if (!container) {
-          throw new Error("Conteneur Cesium non trouvé");
+          throw new Error("Conteneur Cesium not found");
         }
 
         var viewer = new Cesium.Viewer("cesiumContainer", {
@@ -31,10 +31,30 @@ export default {
           navigationHelpButton: false,
           sceneModePicker: false,
         });
+        // console.log("Cesium initialised", viewer);
+        this.viewer = viewer;
 
+        this.viewer.entities.add({
+        position: Cesium.Cartesian3.fromDegrees(-75.59777, 40.03883), // Coordonnées 
+          point: {
+            pixelSize: 10, // Size
+            color: Cesium.Color.RED, // Color RED
+          },
+          description: "Point rouge à ces coordonnées." // Description qui s'affiche dans l'infoBox
+        });
         console.log("Cesium initialisé", viewer);
-      } catch (error) {
-        console.error("Erreur lors de l'initialisation de Cesium:", error);
+
+        // Load GeoJSON file in Cesium
+        const geojsonUrl = 'example.geojson'; 
+
+        this.viewer.dataSources.add(Cesium.GeoJsonDataSource.load(geojsonUrl)).then(() => {
+          console.log("GeoJSON chargé avec succès !");
+        }).catch(error => {
+          console.error("Erreur lors du chargement du GeoJSON:", error);
+        });
+      } 
+      catch (error) {
+        console.error("Error during initialization of Cesium", error);
       }
     }
   }
