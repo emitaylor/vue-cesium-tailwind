@@ -1,0 +1,17 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [3.1324, 43.4479] 
+        },
+        "properties": {
+          "name": "Red Point",
+          "description": "Welcome to Murviel-les-Béziers !"
+        }
+      }
+    ]
+  }
+  
