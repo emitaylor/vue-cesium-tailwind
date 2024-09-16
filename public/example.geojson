@@ -5,11 +5,11 @@
         "type": "Feature",
         "geometry": {
           "type": "Point",
-          "coordinates": [-75.59777, 40.03883] 
+          "coordinates": [3.1324, 43.4479] 
         },
         "properties": {
-          "name": "Point Rouge",
-          "description": "Un simple point rouge sur la carte."
+          "name": "Red Point",
+          "description": "Welcome to Murviel-les-Béziers !"
         }
       }
     ]

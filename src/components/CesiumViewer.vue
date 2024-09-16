@@ -31,16 +31,16 @@ export default {
           navigationHelpButton: false,
           sceneModePicker: false,
         });
-        // console.log("Cesium initialised", viewer);
+        
         this.viewer = viewer;
 
         this.viewer.entities.add({
-        position: Cesium.Cartesian3.fromDegrees(-75.59777, 40.03883), // Coordonnées 
+        position: Cesium.Cartesian3.fromDegrees(3.1324, 43.4479),
           point: {
             pixelSize: 10, // Size
             color: Cesium.Color.RED, // Color RED
           },
-          description: "Point rouge à ces coordonnées." // Description qui s'affiche dans l'infoBox
+          description: "Welcome home!."
         });
         console.log("Cesium initialisé", viewer);
 
