@@ -44,13 +44,13 @@ To get a local copy of this project up and running, follow these steps:
 
 
 ## Usage
-## Navigate the Map: Use your mouse or trackpad to rotate, zoom, and pan around the 3D map.
-## Drones: Observe three drones represented by colored points, moving around the globe simultaneously.
-## Castel Visualization: The Castel of Murviel-lès-Béziers is marked on the map, with a label providing additional context.
+- Navigate the Map: Use your mouse or trackpad to rotate, zoom, and pan around the 3D map.
+- Drones: Observe three drones represented by colored points, moving around the globe simultaneously.
+- Castel Visualization: The Castel of Murviel-lès-Béziers is marked on the map, with a label providing additional context.
 
 
 ## Technologies Used
--**CesiumJS**
--**Vue.js**
--**Node.js**
--**GeoJSON**
+- **CesiumJS**
+- **Vue.js**
+- **Node.js**
+- **GeoJSON**
