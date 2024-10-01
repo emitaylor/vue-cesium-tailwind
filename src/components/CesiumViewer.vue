@@ -85,9 +85,10 @@ export default {
       dronePaths.forEach((path, index) => {
         const drone = this.viewer.entities.add({
           position: Cesium.Cartesian3.fromDegrees(path.longitude, path.latitude, path.height),
-          point: {
-            pixelSize: 10,
-            color: path.color,
+          model: {
+            uri: 'models/scene.gltf',
+            scale: 4.0,
+            minimumPixelSize: 64,
           },
           label: {
             text: `Drone ${index + 1}`,
