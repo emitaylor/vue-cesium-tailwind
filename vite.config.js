@@ -10,18 +10,11 @@ export default defineConfig({
     }
   },
   build: {
-    chunkSizeWarningLimit: 2000
+    chunkSizeWarningLimit: 2000,
+    // Vous pouvez ajouter une base ici si nécessaire :
+    // base: '/your-repo-name/'
   },
   optimizeDeps: {
     include: ['cesium']
-  },
-  server: {
-    proxy: {
-      '/Cesium': {
-        target: 'http://localhost:5173',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/Cesium/, '')
-      }
-    }
   }
 });
