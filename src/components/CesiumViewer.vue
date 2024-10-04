@@ -1,120 +1,212 @@
 <template>
-  <div id="cesiumContainer" style="width: 100%; height: 100vh;"></div>
+  <div class="app-container">
+    <div class="controls">
+      <button @click="playFlight" class="control-button">Play</button>
+      <button @click="pauseFlight" class="control-button">Pause</button>
+      <button @click="prevStep" class="control-button">Étape Précédente</button>
+      <button @click="nextStep" class="control-button">Étape Suivante</button>
+    </div>
+    <div ref="viewerContainer" class="cesium-viewer-container"></div>
+
+    <div class="event-list mt-4">
+      <h2 class="text-lg font-bold mb-2">Liste des Événements</h2>
+      <ul v-if="dronePath && dronePath.length">
+        <li v-for="(data, index) in dronePath" :key="index">
+          <button @click="jumpToStep(index)">
+            {{ data.timestamp }}
+          </button>
+        </li>
+      </ul>
+      <p v-else>Aucune action disponible.</p>
+    </div>
+  </div>
 </template>
 
 <script>
-import * as Cesium from 'cesium';
-import 'cesium/Build/Cesium/Widgets/widgets.css';
+import { onMounted, ref } from 'vue'
+import { Viewer, Cartesian3, HeadingPitchRoll, Transforms, Color, Math as CesiumMath, SampledPositionProperty, JulianDate  } from 'cesium'
+import 'cesium/Build/Cesium/Widgets/widgets.css'
 
 export default {
-  name: "CesiumViewer",
-  mounted() {
-    this.initializeCesium();
-  },
-  methods: {
-    async initializeCesium() {
+  name: 'CesiumViewer',
+  setup() {
+    const viewerContainer = ref(null);
+    const viewer = ref(null);
+    const droneEntity = ref(null);
+    const visionConeEntity = ref(null);
+    const dronePath = ref([]);
+    const currentIndex = ref(0);
+    const timer = ref(null);
+
+    // drone position
+    let currentPosition = Cartesian3.fromDegrees(2.3522, 48.8566, 100);
+    let currentOrientation = Transforms.headingPitchRollQuaternion(
+      currentPosition,
+      new HeadingPitchRoll(
+        CesiumMath.toRadians(0),
+        CesiumMath.toRadians(0),
+        CesiumMath.toRadians(0)
+      )
+    );
+
+    const fetchDronePath = async () => {
       try {
-        await this.$nextTick(); // DOM ready
-        const container = document.getElementById("cesiumContainer");
-
-        if (!container) {
-          throw new Error("Cesium container not found");
-        }
-
-        const viewer = new Cesium.Viewer("cesiumContainer", {
-          infoBox: false,
-          animation: false,
-          timeline: false,
-          fullscreenButton: false,
-          homeButton: false,
-          geocoder: false,
-          navigationHelpButton: false,
-          sceneModePicker: false,
-        });
-        
-        this.viewer = viewer;
-
-        // Centre the camera on the Château of Murviel-lès-Béziers
-        viewer.camera.flyTo({
-          destination: Cesium.Cartesian3.fromDegrees(3.14354, 43.43992, 300),
-          orientation: {
-            heading: Cesium.Math.toRadians(0.0),
-            pitch: Cesium.Math.toRadians(-90.0),
-            roll: 0.0
-          }
-        });
-
-        // Load GeoJSON file
-        const geojsonUrl = 'example.geojson'; 
-
-        const dataSource = await Cesium.GeoJsonDataSource.load(geojsonUrl);
-        viewer.dataSources.add(dataSource);
-
-        // Browse entities and add labels as needed
-        dataSource.entities.values.forEach(entity => {
-          entity.label = {
-            text: entity.properties.name,
-            font: '14pt monospace',
-            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-            outlineWidth: 2,
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            pixelOffset: new Cesium.Cartesian2(0, -9),
-          };
-          entity.point = {
-            pixelSize: 10,
-            color: Cesium.Color.RED,
-            heightReference: Cesium.HeightReference.CLAMP_TO_GROUND,
-          };
-        });
-
-        console.log('\x1b[32m%s\x1b[0m', '\x1b[1mGeoJSON loaded successfully!');
-      } 
-      catch (error) {
-        console.error('\x1b[31m', 'Error during initialization of Cesium', error);
+        const response = await fetch('/datas.json');
+        dronePath.value = await response.json();
+        console.log('dronePath loaded:', dronePath.value);
+      } catch (error) {
+        console.error('Erreur lors du chargement du fichier JSON:', error);
       }
-      this.addDrones();
-    },
+    };
 
-    addDrones() {
-      const dronePaths = [
-        { longitude: 0, latitude: 0, height: 1000, color: Cesium.Color.BLUE },
-        { longitude: 120, latitude: 30, height: 1000, color: Cesium.Color.GREEN },
-        { longitude: -60, latitude: -30, height: 1000, color: Cesium.Color.ORANGE }
-      ];
+    onMounted(async () => {
+  await fetchDronePath();
 
-      dronePaths.forEach((path, index) => {
-        const drone = this.viewer.entities.add({
-          position: Cesium.Cartesian3.fromDegrees(path.longitude, path.latitude, path.height),
-          model: {
-            uri: 'models/scene.gltf',
-            scale: 4.0,
-            minimumPixelSize: 64,
-          },
-          label: {
-            text: `Drone ${index + 1}`,
-            font: '14pt monospace',
-            style: Cesium.LabelStyle.FILL_AND_OUTLINE,
-            outlineWidth: 2,
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-            pixelOffset: new Cesium.Cartesian2(0, -9),
-          }
-        });
+  viewer.value = new Viewer(viewerContainer.value, {
+    shouldAnimate: true,
+    fullscreenButton: true,
+    timeline: false,
+    infoBox: false,
+    selectionIndicator: false,
+  });
 
-        let angle = 0; // Start angle for the drone's movement
-        setInterval(() => {
-          angle += 1; // Change this value to adjust the speed
-          const newLongitude = (path.longitude + angle) % 360; // Make a complete turn around the globe
-          drone.position = Cesium.Cartesian3.fromDegrees(newLongitude, path.latitude, path.height);
-        }, 100); // Adjust this interval to change the update frequency
-      });
-    },
+  // Initialiser le drone si les données JSON ont été chargées
+  if (dronePath.value.length > 0) {
+    const initialData = dronePath.value[0];
+    const initialPosition = Cartesian3.fromDegrees(initialData.longitude, initialData.latitude, initialData.altitude);
+
+    droneEntity.value = viewer.value.entities.add({
+      name: 'Drone',
+      position: initialPosition,
+      point: {
+        pixelSize: 10,
+        color: Color.RED,
+      },
+    });
+
+    viewer.value.zoomTo(droneEntity.value);
+  } else {
+    console.error("Les données JSON ne contiennent aucune position de drone valide.");
   }
-}
+});
+
+const playFlight = () => {
+  console.log('playFlight called');
+  if (currentIndex.value >= dronePath.value.length - 1) {
+    currentIndex.value = 0;
+  }
+
+  timer.value = setInterval(() => {
+    if (currentIndex.value < dronePath.value.length) {
+      updateDronePosition(dronePath.value[currentIndex.value]);
+      currentIndex.value++;
+    } else {
+      clearInterval(timer.value);
+    }
+  }, 1000);
+};
+
+    const pauseFlight = () => {
+      console.log('pauseFlight called');
+      if (timer.value) {
+        clearInterval(timer.value);
+        timer.value = null;
+      }
+    };
+
+    const nextStep = () => {
+      console.log('nextStep called');
+      if (currentIndex.value < dronePath.value.length - 1) {
+        currentIndex.value++;
+        updateDronePosition(dronePath.value[currentIndex.value]);
+      }
+    };
+
+    const prevStep = () => {
+      console.log('prevStep called');
+      if (currentIndex.value > 0) {
+        currentIndex.value--;
+        updateDronePosition(dronePath.value[currentIndex.value]);
+      }
+    };
+
+    const jumpToStep = (index) => {
+      console.log('jumpToStep called with index:', index);
+      currentIndex.value = index;
+      updateDronePosition(dronePath.value[currentIndex.value]);
+    };
+
+    const updateDronePosition = (data) => {
+  console.log('updateDronePosition called with data:', data);
+
+  if (!droneEntity.value) {
+    console.error("droneEntity is not défini.");
+    return;
+  }
+
+  const position = Cartesian3.fromDegrees(data.longitude, data.latitude, data.altitude);
+  droneEntity.value.position = position;
+
+  // Mettre à jour l'orientation du drone
+  const orientation = Transforms.headingPitchRollQuaternion(
+    position,
+    new HeadingPitchRoll(
+      CesiumMath.toRadians(data.attitude_head),
+      CesiumMath.toRadians(data.attitude_pitch),
+      CesiumMath.toRadians(data.attitude_roll)
+    )
+  );
+
+  droneEntity.value.orientation = orientation;
+};
+
+
+    return {
+      viewerContainer,
+      dronePath,
+      playFlight,
+      pauseFlight,
+      nextStep,
+      prevStep,
+      jumpToStep,
+    };
+  },
+};
 </script>
 
-<style>
-#cesiumContainer {
-  width: 100%;
-  height: 100vh;
+<style scoped>
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.controls {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.control-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.control-button:hover {
+  background-color: #0056b3;
+}
+
+.cesium-viewer-container {
+  width: 100vw;
+  height: 60vh;
+}
+
+.event-list {
+  margin-top: 20px;
 }
 </style>

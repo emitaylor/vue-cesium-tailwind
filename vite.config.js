@@ -1,19 +1,13 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
-import { resolve } from 'path';
+import cesium from 'vite-plugin-cesium';
 
 export default defineConfig({
-  plugins: [vue()],
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, './src')
-    }
-  },
+  plugins: [vue(), cesium()],
   build: {
-    chunkSizeWarningLimit: 2000,
-    base: '/src/',
+    chunkSizeWarningLimit: 1600, // Pour éviter les avertissements sur les tailles
   },
-  optimizeDeps: {
-    include: ['cesium']
-  }
+  define: {
+    CESIUM_BASE_URL: JSON.stringify('/cesium'), // Point de base pour les assets Cesium
+  },
 });
